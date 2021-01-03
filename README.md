@@ -1,6 +1,6 @@
-# gitlab-bot
+# GitLab Bot
 
-Simple GitLab bot to automate team workflows
+Simple GitLab bot to automate team workflows.
 
 ## QuickStart
 
@@ -11,23 +11,22 @@ see [egg docs][egg] for more detail.
 ### Development
 
 ```bash
-$ npm i
-$ npm run dev
+$ yarn
+$ yarn dev
 $ open http://localhost:7001/
 ```
 
 ### Deploy
 
 ```bash
-$ npm start
-$ npm stop
+$ yarn start
+$ yarn stop
 ```
 
-### npm scripts
+### Other scripts
 
-- Use `npm run lint` to check code style.
-- Use `npm test` to run unit test.
-- Use `npm run autod` to auto detect dependencies upgrade, see [autod](https://www.npmjs.com/package/autod) for more detail.
-
+- Use `yarn lint` to check code style.
+- Use `yarn test` to run unit test.
+- Use `yarn autod` to auto detect dependencies upgrade, see [autod](https://www.npmjs.com/package/autod) for more detail.
 
 [egg]: https://eggjs.org
