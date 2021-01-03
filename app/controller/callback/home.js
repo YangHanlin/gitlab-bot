@@ -3,10 +3,8 @@
 const { Controller } = require('egg');
 const { v4: uuid } = require('uuid');
 
-const IssuesController = require('./issues');
-
-const CONTROLLERS_PER_EVENT = {
-  'Issue Hook': IssuesController,
+const SERVICES = {
+  'Issue Hook': 'issue',
 };
 
 class CallbackController extends Controller {
@@ -35,16 +33,19 @@ class CallbackController extends Controller {
       ctx.status = 400;
       return;
     }
-    const SpecificController = CONTROLLERS_PER_EVENT[eventType];
-    if (!SpecificController) {
+    const service = SERVICES[eventType];
+    if (!service) {
       ctx.body = {
         error: `Handler for event type '${eventType}' is not found`,
         requestId,
       };
       ctx.status = 404;
     } else {
-      console.log('found');
-      return new SpecificController().index();
+      ctx.body = {
+        requestId,
+      };
+      ctx.status = 202;
+      return ctx.service.events[service].index();
     }
   }
 }
