@@ -19,7 +19,7 @@ $ open http://localhost:7001/
 ### Deploy
 
 ```bash
-$ yarn start
+$ yarn start-daemon
 $ yarn stop
 ```
 
