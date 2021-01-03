@@ -41,6 +41,10 @@ module.exports = appInfo => {
 
   userConfig.webhookSecretToken = process.env.GITLAB_WEBHOOK_TOKEN;
 
+  userConfig.bot = {
+    banLabel: process.env.BOT_BAN_LABEL || 'No Bots',
+  };
+
   return {
     ...config,
     ...userConfig,

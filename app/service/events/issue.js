@@ -4,7 +4,10 @@ const { Service } = require('egg');
 
 class IssueService extends Service {
   async index() {
-    // nothing to do
+    const { ctx } = this;
+    if (await ctx.service.utilities.checkBotBanned()) {
+      return;
+    }
   }
 }
 

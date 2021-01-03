@@ -42,6 +42,7 @@ class CallbackController extends Controller {
       ctx.status = 404;
     } else {
       ctx.body = {
+        message: 'This request is being processed by the server',
         requestId,
       };
       ctx.status = 202;
