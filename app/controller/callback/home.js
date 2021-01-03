@@ -3,7 +3,11 @@
 const { Controller } = require('egg');
 const { v4: uuid } = require('uuid');
 
-const CONTROLLERS_PER_EVENT = {};
+const IssuesController = require('./issues');
+
+const CONTROLLERS_PER_EVENT = {
+  'Issue Hook': IssuesController,
+};
 
 class CallbackController extends Controller {
   async index() {
