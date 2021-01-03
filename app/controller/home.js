@@ -12,22 +12,22 @@ class HomeController extends Controller {
     return fetch('https://ip.tdirc.workers.dev', {
       headers: {
         Accept: 'application/json',
-      }
+      },
     })
-    .then((resp) => resp.json())
-    .then((data) => {
-      const { ip, region } = data;
-      greetings.push(`The server is deployed with IP ${ip} located in ${region}`);
-      ctx.status = 200;
-      ctx.body = { greetings };
-    })
-    .catch((err) => {
-      ctx.status = 200;
-      ctx.body = {
-        greetings,
-        err,
-      };
-    });
+      .then(resp => resp.json())
+      .then(data => {
+        const { ip, region } = data;
+        greetings.push(`The server is deployed with IP ${ip} located in ${region}`);
+        ctx.status = 200;
+        ctx.body = { greetings };
+      })
+      .catch(err => {
+        ctx.status = 200;
+        ctx.body = {
+          greetings,
+          err,
+        };
+      });
   }
 }
 
