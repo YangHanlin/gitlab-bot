@@ -20,6 +20,13 @@ module.exports = appInfo => {
   // add your middleware config here
   config.middleware = [];
 
+  // Disable CSRF protection
+  config.security = {
+    csrf: {
+      enable: false,
+    },
+  };
+
   // add your user config here
   const userConfig = {
     // myAppName: 'egg',
@@ -31,6 +38,8 @@ module.exports = appInfo => {
     oauthToken: process.env.GITLAB_OAUTH_TOKEN,
     requestTimeout: process.env.GITLAB_REQUEST_TIMEOUT,
   };
+
+  userConfig.webhookSecretToken = process.env.GITLAB_WEBHOOK_TOKEN;
 
   return {
     ...config,
