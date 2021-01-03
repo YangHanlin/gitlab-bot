@@ -2,6 +2,8 @@
 
 'use strict';
 
+const process = require('process');
+
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
@@ -21,6 +23,13 @@ module.exports = appInfo => {
   // add your user config here
   const userConfig = {
     // myAppName: 'egg',
+  };
+
+  userConfig.gitlab = {
+    host: process.env.GITLAB_HOST,
+    token: process.env.GITLAB_PERSONAL_ACCESS_TOKEN,
+    oauthToken: process.env.GITLAB_OAUTH_TOKEN,
+    requestTimeout: process.env.GITLAB_REQUEST_TIMEOUT,
   };
 
   return {
