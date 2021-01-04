@@ -12,7 +12,7 @@ class IssueService extends Service {
     ctx.runInBackground(async ctx => {
       // Acquire basic information
       // const { username } = await app.gitbeaker.Users.current();
-      const { action, iid: issueIid } = ctx.request.body.object_attributes;
+      const { iid: issueIid } = ctx.request.body.object_attributes;
       const projectId = ctx.request.body.project.id;
       // const changes = ctx.request.body.changes;
       const issue = await app.gitbeaker.Issues.show(projectId, issueIid);
@@ -20,47 +20,53 @@ class IssueService extends Service {
       const notifiedUsername = issue.assignees.length > 0 ? issue.assignees[0].username : issue.author.username;
       const tips = {};
 
-      if (action === 'open' || action === 'update') {
-        app.logger.info('This issue is recently opened or updated');
+      // Check whether the issue has been "touched"
+      const { labels, milestone, assignees, merge_requests_count } = issue;
+      const { time_estimate, total_time_spent } = issue.time_stats;
+      const touchedConditions = [
+        () => labels.includes('Doing'),
+        () => assignees.length > 0,
+        () => merge_requests_count > 0,
+        () => total_time_spent > 0,
+      ];
+      let touched = false;
 
-        // Check whether the issue has been "touched"
-        const { labels, milestone, assignees, merge_requests_count } = issue;
-        const { time_estimate } = issue.time_stats;
-        const touchedConditions = [
-          () => labels.includes('Doing'),
-          () => assignees.length > 0,
-          () => merge_requests_count > 0,
-        ];
-        let touched = false;
-
-        for (const condition of touchedConditions) {
-          if (condition()) {
-            touched = true;
-            break;
-          }
+      for (const condition of touchedConditions) {
+        if (condition()) {
+          touched = true;
+          break;
         }
-        if (touched) {
-          app.logger.info('This issue seems to be "touched"; checking if it conforms to the convention');
+      }
+      if (touched) {
+        app.logger.info('This issue seems to be "touched"; checking if it conforms to the convention');
 
-          // Check whether priority labels are correct
-          const priorityLabels = labels.filter(label => label.startsWith('优先级：'));
-          if (priorityLabels.length === 0) {
-            tips['missing-priority-label'] = '当前 Issue 没有优先级相关 Label，请注意设定优先级';
-          } else if (priorityLabels.length > 1) {
-            tips['too-many-priority-label'] = '当前 Issue 优先级 Label 相互冲突，请注意设定优先级';
-          }
-          // Check whether milestone is missing
-          if (!milestone) {
-            tips['missing-milestone'] = '当前 Issue 没有关联 Milestone，请尽快关联相关的 Milestone';
-          }
-          // Check whether time estimate is missing
-          if (time_estimate === 0) {
-            tips['missing-estimate'] = '当前 Issue 似乎还没有预估时间，请尽快通过 `/estimate` 预估时间';
-          }
-          // Check whether assignees are missing
-          if (issue.assignees.length === 0) {
-            tips['missing-assignees'] = '当前 Issue 似乎还没有负责人 (Assignee)，请指定负责人';
-          }
+        // Check whether priority labels are correct
+        const priorityLabels = labels.filter(label => label.startsWith('优先级：'));
+        if (priorityLabels.length === 0) {
+          tips['missing-priority-label'] = '当前 Issue 没有优先级相关 Label，请注意设定优先级';
+        } else if (priorityLabels.length > 1) {
+          tips['too-many-priority-label'] = '当前 Issue 优先级 Label 相互冲突，请注意设定优先级';
+        }
+        // Check whether milestone is missing
+        if (!milestone) {
+          tips['missing-milestone'] = '当前 Issue 没有关联 Milestone，请注意关联相关的 Milestone';
+        }
+        // Check whether time estimate is missing
+        if (time_estimate === 0) {
+          tips['missing-estimate'] = '当前 Issue 似乎还没有预估时间，请通过 `/estimate` 预估时间';
+        }
+        // Check whether assignees are missing
+        if (issue.assignees.length === 0) {
+          tips['missing-assignees'] = '当前 Issue 似乎还没有负责人 (Assignee)，请指定负责人';
+        }
+      }
+
+      if (issue.state === 'closed') {
+        app.logger.info('This issue has been closed; checking if it conforms to the convention');
+
+        // Check whether spent time is missing
+        if (total_time_spent === 0) {
+          tips['missing-spent'] = '当前 Issue 还没有记录花费的时间，请通过 `/spend` 记录时间';
         }
       }
 
@@ -75,12 +81,13 @@ class IssueService extends Service {
 
       await this.filterMetadata(metadata, projectId, issueIid);
 
+      app.logger.info(`Filters have left out ${metadata.tipIds.length} tip(s)`);
       app.logger.debug('Metadata filtered =', metadata);
 
       if (metadata.tipIds.length > 0) {
         app.logger.info('Sending tips');
         const messages = [];
-        messages.push('<!-- GITLAB-BOT-METADATA\n' + JSON.stringify(metadata) + '\nGITLAB-BOT-METADATA -->');
+        messages.push('<!-- GITLAB-BOT-METADATA\n' + JSON.stringify(metadata) + '\n     GITLAB-BOT-METADATA -->');
         messages.push('@' + metadata.notifiedUsername);
         messages.push(metadata.tipIds.map(tipId => '- ' + tips[tipId]).join('\n'));
         const messageText = messages.join('\n\n');
