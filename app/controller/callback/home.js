@@ -5,6 +5,7 @@ const { v4: uuid } = require('uuid');
 
 const SERVICES = {
   'Issue Hook': 'issue',
+  'Merge Request Hook': 'mr',
 };
 
 class CallbackController extends Controller {
