@@ -57,6 +57,10 @@ class IssueService extends Service {
           if (time_estimate === 0) {
             tips['missing-estimate'] = '当前 Issue 似乎还没有预估时间，请尽快通过 `/estimate` 预估时间';
           }
+          // Check whether assignees are missing
+          if (issue.assignees.length === 0) {
+            tips['missing-assignees'] = '当前 Issue 似乎还没有负责人 (Assignee)，请指定负责人';
+          }
         }
       }
 
@@ -69,22 +73,42 @@ class IssueService extends Service {
       app.logger.info(`Procedures above have produced ${metadata.tipIds.length} tip(s)`);
       app.logger.debug('Metadata being filtered =', metadata);
 
-      // TODO Add some filter to avoid repeated notifications
+      await this.filterMetadata(metadata, projectId, issueIid);
 
       app.logger.debug('Metadata filtered =', metadata);
 
       if (metadata.tipIds.length > 0) {
         app.logger.info('Sending tips');
         const messages = [];
+        messages.push('<!-- GITLAB-BOT-METADATA\n' + JSON.stringify(metadata) + '\nGITLAB-BOT-METADATA -->');
         messages.push('@' + metadata.notifiedUsername);
         messages.push(metadata.tipIds.map(tipId => '- ' + tips[tipId]).join('\n'));
-        messages.push('<!-- GITLAB-BOT-METADATA\n' + JSON.stringify(metadata) + '\nGITLAB-BOT-METADATA -->');
         const messageText = messages.join('\n\n');
         await app.gitbeaker.IssueNotes.create(projectId, issueIid, messageText);
       } else {
         app.logger.info('There are no tips to be sent');
       }
     });
+  }
+
+  async filterMetadata(metadata, projectId, issueIid) {
+    const { app } = this;
+    const { username: botUsername } = await app.gitbeaker.Users.current();
+    const comments = await app.gitbeaker.IssueNotes.all(projectId, issueIid);
+    let existentTipIds = [];
+    comments.forEach(comment => {
+      if (comment.author.username === botUsername) {
+        // Try extracting metadata from commented section in previous comments
+        const metadataMatch = comment.body.match(/<!--\s*GITLAB-BOT-METADATA\s*(.*?)\s*GITLAB-BOT-METADATA\s*-->/);
+        if (metadataMatch) {
+          const { notifiedUsername, tipIds } = JSON.parse(metadataMatch[1]);
+          if (notifiedUsername === metadata.notifiedUsername) {
+            existentTipIds = existentTipIds.concat(tipIds);
+          }
+        }
+      }
+    });
+    metadata.tipIds = metadata.tipIds.filter(tipId => !existentTipIds.includes(tipId));
   }
 }
 
