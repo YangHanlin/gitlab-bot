@@ -28,6 +28,7 @@ class IssueService extends Service {
         () => assignees.length > 0,
         () => merge_requests_count > 0,
         () => total_time_spent > 0,
+        () => issue.state === 'closed',
       ];
       let touched = false;
 
