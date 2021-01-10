@@ -45,6 +45,10 @@ module.exports = appInfo => {
     banLabel: process.env.BOT_BAN_LABEL || 'No Bots',
   };
 
+  userConfig.issue = {
+    conventionCheckTimeout: process.env.ISSUE_CONVENTION_CHECK_TIMEOUT || 150,
+  };
+
   return {
     ...config,
     ...userConfig,
