@@ -46,7 +46,7 @@ module.exports = appInfo => {
   };
 
   userConfig.issue = {
-    conventionCheckTimeout: process.env.ISSUE_CONVENTION_CHECK_TIMEOUT || 150,
+    conventionCheckTimeout: process.env.ISSUE_CONVENTION_CHECK_TIMEOUT || 60,
   };
 
   return {
